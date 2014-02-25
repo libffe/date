@@ -42,6 +42,7 @@
 
 #define STRBUF_INIT  { 0, 0, strbuf_slopbuf }
 #define strbuf_reset(sb)  strbuf_setlen(sb, 0)
+#define P_(s, v) ((v) > 1 ? s"s" : s)
 
 struct strbuf {
 	size_t alloc;
@@ -280,35 +281,35 @@ void show_date_relative(unsigned long time, int tz,
 	}
 	diff = now->tv_sec - time;
 	if (diff < 90) {
-		strbuf_addf(timebuf, "%lu seconds ago", diff);
+		strbuf_addf(timebuf, "%lu %s ago", diff, P_("second", diff));
 		return;
 	}
 	/* Turn it into minutes */
 	diff = (diff + 30) / 60;
 	if (diff < 90) {
-		strbuf_addf(timebuf," %lu minutes ago", diff);
+		strbuf_addf(timebuf, "%lu %s ago", diff, P_("minute", diff));
 		return;
 	}
 	/* Turn it into hours */
 	diff = (diff + 30) / 60;
 	if (diff < 36) {
-		strbuf_addf(timebuf, "%lu hours ago", diff);
+		strbuf_addf(timebuf, "%lu %s ago", diff, P_("hour", diff));
 		return;
 	}
 	/* We deal with number of days from here on */
 	diff = (diff + 12) / 24;
 	if (diff < 14) {
-		strbuf_addf(timebuf, "%lu days ago", diff);
+		strbuf_addf(timebuf, "%lu %s ago", diff, P_("day", diff));
 		return;
 	}
 	/* Say weeks for the past 10 weeks or so */
 	if (diff < 70) {
-		strbuf_addf(timebuf, "%lu weeks ago", (diff + 3) / 7);
+		strbuf_addf(timebuf, "%lu %s ago", (diff + 3) / 7, P_("week", (diff + 3) / 7));
 		return;
 	}
 	/* Say months for the past 12 months or so */
 	if (diff < 365) {
-		strbuf_addf(timebuf, "%lu months ago", (diff + 15) / 30);
+		strbuf_addf(timebuf, "%lu %s ago", (diff + 15) / 30, P_("month", (diff + 15) / 30));
 		return;
 	}
 	/* Give years and months for 5 years or so */
@@ -318,16 +319,15 @@ void show_date_relative(unsigned long time, int tz,
 		unsigned long months = totalmonths % 12;
 		if (months) {
 			struct strbuf sb = STRBUF_INIT;
-			strbuf_addf(&sb, "%lu years", years);
-			/* TRANSLATORS: "%s" is "<n> years" */
-			strbuf_addf(timebuf, "%s, %lu months ago", sb.buf, months);
+			strbuf_addf(&sb, "%lu %s", years, P_("year", years));
+			strbuf_addf(timebuf, "%s, %lu %s ago", sb.buf, months, P_("month", months));
 			strbuf_release(&sb);
 		} else
-			strbuf_addf(timebuf,"%lu years ago", years);
+			strbuf_addf(timebuf,"%lu %s ago", years, P_("year", years));
 		return;
 	}
 	/* Otherwise, just years. Centuries is probably overkill. */
-	strbuf_addf(timebuf,"%lu years ago", (diff + 183) / 365);
+	strbuf_addf(timebuf,"%lu %s ago", (diff + 183) / 365, P_("year", (diff + 183) / 365));
 }
 
 const char *show_date(unsigned long time, int tz, enum date_mode mode)
@@ -1285,79 +1285,114 @@ unsigned long approxidate_careful(const char *date, int *error_ret)
 }
 
 #ifdef DATE_TEST
-static const char *usage_msg = "\n"
-"  test-date show [time_t]...\n"
-"  test-date parse [date]...\n"
-"  test-date approxidate [date]...\n";
-
-static void show_dates(char **argv, struct timeval *now)
+static int test_show_date(time_t t, struct timeval *now, const char *expected)
 {
+	int fail = 0;
 	struct strbuf buf = STRBUF_INIT;
-
-	for (; *argv; argv++) {
-		time_t t = atoi(*argv);
-		show_date_relative(t, 0, now, &buf);
-		printf("%s -> %s\n", *argv, buf.buf);
+	show_date_relative(t, 0, now, &buf);
+	if (strcmp(buf.buf, expected)) {
+		fail = 1;
 	}
 	strbuf_release(&buf);
+	return fail;
 }
 
-static void parse_dates(char **argv, struct timeval *now)
+static int test_parse_date(const char *input, struct timeval *now, const char *expected)
 {
-	for (; *argv; argv++) {
-		char result[100];
-		unsigned long t;
-		int tz;
+	int fail = 0;
+	char result[100];
+	unsigned long t;
+	int tz;
 
-		result[0] = 0;
-		parse_date(*argv, result, sizeof(result));
-		if (sscanf(result, "%lu %d", &t, &tz) == 2)
-			printf("%s -> %s\n",
-			       *argv, show_date(t, tz, DATE_ISO8601));
-		else
-			printf("%s -> bad\n", *argv);
+	result[0] = 0;
+	parse_date(input, result, sizeof(result));
+	if (sscanf(result, "%lu %d", &t, &tz) == 2) {
+		if (strcmp(show_date(t, tz, DATE_ISO8601), expected)) {
+			fail = 1;
+		}
+	} else {
+		if (strcmp("bad", expected)) {
+			fail = 1;
+		}
 	}
+	return fail;
 }
 
-static void parse_approxidate(char **argv, struct timeval *now)
+static int test_parse_approxidate(const char *input, struct timeval *now, const char *expected)
 {
-	for (; *argv; argv++) {
-		time_t t;
-		t = approxidate_relative(*argv, now);
-		printf("%s -> %s\n", *argv, show_date(t, 0, DATE_ISO8601));
+	int fail = 0;
+	time_t t;
+	t = approxidate_relative(input, now);
+	if (strcmp(show_date(t, 0, DATE_ISO8601), expected)) {
+		fprintf(stderr, "%s\n", show_date(t, 0, DATE_ISO8601));
+		fail = 1;
 	}
-}
-
-static void usage(const char *err)
-{
-	fprintf(stderr, "usage: %s", err);
-	exit(129);
+	return fail;
 }
 
 int main(int argc, char **argv)
 {
+	unsigned int failures = 0;
 	struct timeval now;
-	const char *x;
+	/* arbitrary reference time: 2009-08-30 19:20:00 */
+	now.tv_sec = 1251660000;
+	now.tv_usec = 0;
 
-	x = getenv("TEST_DATE_NOW");
-	if (x) {
-		now.tv_sec = atoi(x);
-		now.tv_usec = 0;
-	}
-	else
-		gettimeofday(&now, NULL);
+	setenv("TZ", "UTC", 1);
 
-	argv++;
-	if (!*argv)
-		usage(usage_msg);
-	if (!strcmp(*argv, "show"))
-		show_dates(argv+1, &now);
-	else if (!strcmp(*argv, "parse"))
-		parse_dates(argv+1, &now);
-	else if (!strcmp(*argv, "approxidate"))
-		parse_approxidate(argv+1, &now);
-	else
-		usage(usage_msg);
-	return 0;
+	/* check_show */
+	failures += test_show_date(now.tv_sec - 5, &now, "5 seconds ago");
+  failures += test_show_date(now.tv_sec - 300, &now, "5 minutes ago");
+  failures += test_show_date(now.tv_sec - 18000, &now, "5 hours ago");
+  failures += test_show_date(now.tv_sec - 432000, &now, "5 days ago");
+  failures += test_show_date(now.tv_sec - 1728000, &now, "3 weeks ago");
+  failures += test_show_date(now.tv_sec - 13000000, &now, "5 months ago");
+  failures += test_show_date(now.tv_sec - 37500000, &now, "1 year, 2 months ago");
+  failures += test_show_date(now.tv_sec - 55188000, &now, "1 year, 9 months ago");
+  failures += test_show_date(now.tv_sec - 630000000, &now, "20 years ago");
+  failures += test_show_date(now.tv_sec - 31449600, &now, "12 months ago");
+  failures += test_show_date(now.tv_sec - 62985600, &now, "2 years ago");
+
+  /* check_parse */
+  failures += test_parse_date("2008", &now, "bad");
+  failures += test_parse_date("2008-02", &now, "bad");
+  failures += test_parse_date("2008-02-14", &now, "bad");
+  failures += test_parse_date("2008-02-14 20:30:45", &now, "2008-02-14 20:30:45 +0000");
+  failures += test_parse_date("2008-02-14 20:30:45 -0500", &now, "2008-02-14 20:30:45 -0500");
+  failures += test_parse_date("2008-02-14 20:30:45 -0015", &now, "2008-02-14 20:30:45 -0015");
+  failures += test_parse_date("2008-02-14 20:30:45 -5", &now, "2008-02-14 20:30:45 +0000");
+  failures += test_parse_date("2008-02-14 20:30:45 -5:", &now, "2008-02-14 20:30:45 +0000");
+  failures += test_parse_date("2008-02-14 20:30:45 -05", &now, "2008-02-14 20:30:45 -0500");
+  failures += test_parse_date("2008-02-14 20:30:45 -:30", &now, "2008-02-14 20:30:45 +0000");
+  failures += test_parse_date("2008-02-14 20:30:45 -05:00", &now, "2008-02-14 20:30:45 -0500");
+
+  /* check_approxidate */
+  failures += test_parse_approxidate("now", &now, "2009-08-30 19:20:00 +0000");
+  failures += test_parse_approxidate("5 seconds ago", &now, "2009-08-30 19:19:55 +0000");
+  failures += test_parse_approxidate("5.seconds.ago", &now, "2009-08-30 19:19:55 +0000");
+  failures += test_parse_approxidate("10.minutes.ago", &now, "2009-08-30 19:10:00 +0000");
+  failures += test_parse_approxidate("yesterday", &now, "2009-08-29 19:20:00 +0000");
+  failures += test_parse_approxidate("3.days.ago", &now, "2009-08-27 19:20:00 +0000");
+  failures += test_parse_approxidate("3.weeks.ago", &now, "2009-08-09 19:20:00 +0000");
+  failures += test_parse_approxidate("3.months.ago", &now, "2009-05-30 19:20:00 +0000");
+  failures += test_parse_approxidate("2.years.3.months.ago", &now, "2007-05-30 19:20:00 +0000");
+
+  failures += test_parse_approxidate("6am yesterday", &now, "2009-08-29 06:00:00 +0000");
+  failures += test_parse_approxidate("6pm yesterday", &now, "2009-08-29 18:00:00 +0000");
+  failures += test_parse_approxidate("3:00", &now, "2009-08-30 03:00:00 +0000");
+  failures += test_parse_approxidate("15:00", &now, "2009-08-30 15:00:00 +0000");
+  failures += test_parse_approxidate("noon today", &now, "2009-08-30 12:00:00 +0000");
+  failures += test_parse_approxidate("noon yesterday", &now, "2009-08-29 12:00:00 +0000");
+
+  failures += test_parse_approxidate("last tuesday", &now, "2009-08-25 19:20:00 +0000");
+  failures += test_parse_approxidate("July 5th", &now, "2009-07-05 19:20:00 +0000");
+  failures += test_parse_approxidate("06/05/2009", &now, "2009-06-05 19:20:00 +0000");
+  failures += test_parse_approxidate("06.05.2009", &now, "2009-05-06 19:20:00 +0000");
+
+  failures += test_parse_approxidate("Jun 6, 5AM", &now, "2009-06-06 05:00:00 +0000");
+  failures += test_parse_approxidate("5AM Jun 6", &now, "2009-06-06 05:00:00 +0000");
+  failures += test_parse_approxidate("6AM, June 7, 2009", &now, "2009-06-07 06:00:00 +0000");
+
+	return failures;
 }
 #endif
