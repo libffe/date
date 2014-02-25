@@ -56,7 +56,7 @@ struct strbuf {
  */
 char strbuf_slopbuf[1];
 
-static void die(const char *err, ...)
+static __attribute__((__noreturn__)) void die(const char *err, ...)
 {
 	char msg[4096];
 	va_list params;
@@ -1284,8 +1284,7 @@ unsigned long approxidate_careful(const char *date, int *error_ret)
 	return approxidate_str(date, &tv, error_ret);
 }
 
-
-/* TODO */
+#ifdef DATE_TEST
 static const char *usage_msg = "\n"
 "  test-date show [time_t]...\n"
 "  test-date parse [date]...\n"
@@ -1331,8 +1330,8 @@ static void parse_approxidate(char **argv, struct timeval *now)
 
 static void usage(const char *err)
 {
-  fprintf(stderr, "usage: %s", err);
-  exit(129);
+	fprintf(stderr, "usage: %s", err);
+	exit(129);
 }
 
 int main(int argc, char **argv)
@@ -1361,3 +1360,4 @@ int main(int argc, char **argv)
 		usage(usage_msg);
 	return 0;
 }
+#endif
