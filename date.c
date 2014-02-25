@@ -22,6 +22,7 @@
 #define unsigned_add_overflows(a, b) \
     ((b) > maximum_unsigned_value_of_type(a) - (a))
 #define alloc_nr(x) (((x)+16)*3/2)
+
 /*
  * Realloc the buffer pointed at by variable 'x' so that it can hold
  * at least 'nr' entries; the number of entries currently allocated
@@ -1342,56 +1343,56 @@ int main(int argc, char **argv)
 
 	/* check_show */
 	failures += test_show_date(now.tv_sec - 5, &now, "5 seconds ago");
-  failures += test_show_date(now.tv_sec - 300, &now, "5 minutes ago");
-  failures += test_show_date(now.tv_sec - 18000, &now, "5 hours ago");
-  failures += test_show_date(now.tv_sec - 432000, &now, "5 days ago");
-  failures += test_show_date(now.tv_sec - 1728000, &now, "3 weeks ago");
-  failures += test_show_date(now.tv_sec - 13000000, &now, "5 months ago");
-  failures += test_show_date(now.tv_sec - 37500000, &now, "1 year, 2 months ago");
-  failures += test_show_date(now.tv_sec - 55188000, &now, "1 year, 9 months ago");
-  failures += test_show_date(now.tv_sec - 630000000, &now, "20 years ago");
-  failures += test_show_date(now.tv_sec - 31449600, &now, "12 months ago");
-  failures += test_show_date(now.tv_sec - 62985600, &now, "2 years ago");
+	failures += test_show_date(now.tv_sec - 300, &now, "5 minutes ago");
+	failures += test_show_date(now.tv_sec - 18000, &now, "5 hours ago");
+	failures += test_show_date(now.tv_sec - 432000, &now, "5 days ago");
+	failures += test_show_date(now.tv_sec - 1728000, &now, "3 weeks ago");
+	failures += test_show_date(now.tv_sec - 13000000, &now, "5 months ago");
+	failures += test_show_date(now.tv_sec - 37500000, &now, "1 year, 2 months ago");
+	failures += test_show_date(now.tv_sec - 55188000, &now, "1 year, 9 months ago");
+	failures += test_show_date(now.tv_sec - 630000000, &now, "20 years ago");
+	failures += test_show_date(now.tv_sec - 31449600, &now, "12 months ago");
+	failures += test_show_date(now.tv_sec - 62985600, &now, "2 years ago");
 
-  /* check_parse */
-  failures += test_parse_date("2008", &now, "bad");
-  failures += test_parse_date("2008-02", &now, "bad");
-  failures += test_parse_date("2008-02-14", &now, "bad");
-  failures += test_parse_date("2008-02-14 20:30:45", &now, "2008-02-14 20:30:45 +0000");
-  failures += test_parse_date("2008-02-14 20:30:45 -0500", &now, "2008-02-14 20:30:45 -0500");
-  failures += test_parse_date("2008-02-14 20:30:45 -0015", &now, "2008-02-14 20:30:45 -0015");
-  failures += test_parse_date("2008-02-14 20:30:45 -5", &now, "2008-02-14 20:30:45 +0000");
-  failures += test_parse_date("2008-02-14 20:30:45 -5:", &now, "2008-02-14 20:30:45 +0000");
-  failures += test_parse_date("2008-02-14 20:30:45 -05", &now, "2008-02-14 20:30:45 -0500");
-  failures += test_parse_date("2008-02-14 20:30:45 -:30", &now, "2008-02-14 20:30:45 +0000");
-  failures += test_parse_date("2008-02-14 20:30:45 -05:00", &now, "2008-02-14 20:30:45 -0500");
+	/* check_parse */
+	failures += test_parse_date("2008", &now, "bad");
+	failures += test_parse_date("2008-02", &now, "bad");
+	failures += test_parse_date("2008-02-14", &now, "bad");
+	failures += test_parse_date("2008-02-14 20:30:45", &now, "2008-02-14 20:30:45 +0000");
+	failures += test_parse_date("2008-02-14 20:30:45 -0500", &now, "2008-02-14 20:30:45 -0500");
+	failures += test_parse_date("2008-02-14 20:30:45 -0015", &now, "2008-02-14 20:30:45 -0015");
+	failures += test_parse_date("2008-02-14 20:30:45 -5", &now, "2008-02-14 20:30:45 +0000");
+	failures += test_parse_date("2008-02-14 20:30:45 -5:", &now, "2008-02-14 20:30:45 +0000");
+	failures += test_parse_date("2008-02-14 20:30:45 -05", &now, "2008-02-14 20:30:45 -0500");
+	failures += test_parse_date("2008-02-14 20:30:45 -:30", &now, "2008-02-14 20:30:45 +0000");
+	failures += test_parse_date("2008-02-14 20:30:45 -05:00", &now, "2008-02-14 20:30:45 -0500");
 
-  /* check_approxidate */
-  failures += test_parse_approxidate("now", &now, "2009-08-30 19:20:00 +0000");
-  failures += test_parse_approxidate("5 seconds ago", &now, "2009-08-30 19:19:55 +0000");
-  failures += test_parse_approxidate("5.seconds.ago", &now, "2009-08-30 19:19:55 +0000");
-  failures += test_parse_approxidate("10.minutes.ago", &now, "2009-08-30 19:10:00 +0000");
-  failures += test_parse_approxidate("yesterday", &now, "2009-08-29 19:20:00 +0000");
-  failures += test_parse_approxidate("3.days.ago", &now, "2009-08-27 19:20:00 +0000");
-  failures += test_parse_approxidate("3.weeks.ago", &now, "2009-08-09 19:20:00 +0000");
-  failures += test_parse_approxidate("3.months.ago", &now, "2009-05-30 19:20:00 +0000");
-  failures += test_parse_approxidate("2.years.3.months.ago", &now, "2007-05-30 19:20:00 +0000");
+	/* check_approxidate */
+	failures += test_parse_approxidate("now", &now, "2009-08-30 19:20:00 +0000");
+	failures += test_parse_approxidate("5 seconds ago", &now, "2009-08-30 19:19:55 +0000");
+	failures += test_parse_approxidate("5.seconds.ago", &now, "2009-08-30 19:19:55 +0000");
+	failures += test_parse_approxidate("10.minutes.ago", &now, "2009-08-30 19:10:00 +0000");
+	failures += test_parse_approxidate("yesterday", &now, "2009-08-29 19:20:00 +0000");
+	failures += test_parse_approxidate("3.days.ago", &now, "2009-08-27 19:20:00 +0000");
+	failures += test_parse_approxidate("3.weeks.ago", &now, "2009-08-09 19:20:00 +0000");
+	failures += test_parse_approxidate("3.months.ago", &now, "2009-05-30 19:20:00 +0000");
+	failures += test_parse_approxidate("2.years.3.months.ago", &now, "2007-05-30 19:20:00 +0000");
 
-  failures += test_parse_approxidate("6am yesterday", &now, "2009-08-29 06:00:00 +0000");
-  failures += test_parse_approxidate("6pm yesterday", &now, "2009-08-29 18:00:00 +0000");
-  failures += test_parse_approxidate("3:00", &now, "2009-08-30 03:00:00 +0000");
-  failures += test_parse_approxidate("15:00", &now, "2009-08-30 15:00:00 +0000");
-  failures += test_parse_approxidate("noon today", &now, "2009-08-30 12:00:00 +0000");
-  failures += test_parse_approxidate("noon yesterday", &now, "2009-08-29 12:00:00 +0000");
+	failures += test_parse_approxidate("6am yesterday", &now, "2009-08-29 06:00:00 +0000");
+	failures += test_parse_approxidate("6pm yesterday", &now, "2009-08-29 18:00:00 +0000");
+	failures += test_parse_approxidate("3:00", &now, "2009-08-30 03:00:00 +0000");
+	failures += test_parse_approxidate("15:00", &now, "2009-08-30 15:00:00 +0000");
+	failures += test_parse_approxidate("noon today", &now, "2009-08-30 12:00:00 +0000");
+	failures += test_parse_approxidate("noon yesterday", &now, "2009-08-29 12:00:00 +0000");
 
-  failures += test_parse_approxidate("last tuesday", &now, "2009-08-25 19:20:00 +0000");
-  failures += test_parse_approxidate("July 5th", &now, "2009-07-05 19:20:00 +0000");
-  failures += test_parse_approxidate("06/05/2009", &now, "2009-06-05 19:20:00 +0000");
-  failures += test_parse_approxidate("06.05.2009", &now, "2009-05-06 19:20:00 +0000");
+	failures += test_parse_approxidate("last tuesday", &now, "2009-08-25 19:20:00 +0000");
+	failures += test_parse_approxidate("July 5th", &now, "2009-07-05 19:20:00 +0000");
+	failures += test_parse_approxidate("06/05/2009", &now, "2009-06-05 19:20:00 +0000");
+	failures += test_parse_approxidate("06.05.2009", &now, "2009-05-06 19:20:00 +0000");
 
-  failures += test_parse_approxidate("Jun 6, 5AM", &now, "2009-06-06 05:00:00 +0000");
-  failures += test_parse_approxidate("5AM Jun 6", &now, "2009-06-06 05:00:00 +0000");
-  failures += test_parse_approxidate("6AM, June 7, 2009", &now, "2009-06-07 06:00:00 +0000");
+	failures += test_parse_approxidate("Jun 6, 5AM", &now, "2009-06-06 05:00:00 +0000");
+	failures += test_parse_approxidate("5AM Jun 6", &now, "2009-06-06 05:00:00 +0000");
+	failures += test_parse_approxidate("6AM, June 7, 2009", &now, "2009-06-07 06:00:00 +0000");
 
 	return failures;
 }

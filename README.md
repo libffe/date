@@ -3,7 +3,7 @@
 ![release candidate](http://img.shields.io/badge/status-release_candidate-green.svg)&nbsp;
 [![Build Status](http://img.shields.io/travis/scheibo/date.svg)](https://travis-ci.org/scheibo/date)
 
-date utils extracted from git - provides a sane API for parsing and working with
+`date` utilities extracted from git - provides a sane API for parsing and working with
 dates in C.
 
 ## License
