@@ -1,7 +1,7 @@
 # date
 
 ![release candidate](http://img.shields.io/badge/status-release_candidate-green.svg)&nbsp;
-[![Build Status](http://img.shields.io/travis/scheibo/date.svg)](https://travis-ci.org/scheibo/date)
+[![Build Status](https://travis-ci.org/scheibo/date.png)](https://travis-ci.org/scheibo/date)
 
 date utils extracted from git - provides a sane API for parsing and working with
 dates in C.
