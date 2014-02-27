@@ -1275,6 +1275,7 @@ static int test_show_date(time_t t, struct timeval *now, const char *expected)
 	struct strbuf buf = STRBUF_INIT;
 	show_date_relative(t, 0, now, &buf);
 	if (strcmp(buf.buf, expected)) {
+		fprintf(stderr, "got: '%s', expected: '%s'\n", buf.buf, expected);
 		fail = 1;
 	}
 	strbuf_release(&buf);
@@ -1292,10 +1293,12 @@ static int test_parse_date(const char *input, struct timeval *now, const char *e
 	parse_date(input, result, sizeof(result));
 	if (sscanf(result, "%lu %d", &t, &tz) == 2) {
 		if (strcmp(show_date(t, tz, DATE_ISO8601), expected)) {
+			fprintf(stderr, "got: '%s', expected: '%s'\n", show_date(t, tz, DATE_ISO8601), expected);
 			fail = 1;
 		}
 	} else {
 		if (strcmp("bad", expected)) {
+			fprintf(stderr, "got: 'bad', expected: '%s'\n", expected);
 			fail = 1;
 		}
 	}
@@ -1308,7 +1311,7 @@ static int test_parse_approxidate(const char *input, struct timeval *now, const 
 	time_t t;
 	t = approxidate_relative(input, now);
 	if (strcmp(show_date(t, 0, DATE_ISO8601), expected)) {
-		fprintf(stderr, "%s\n", show_date(t, 0, DATE_ISO8601));
+		fprintf(stderr, "got: '%s', expected: '%s'\n", show_date(t, 0, DATE_ISO8601), expected);
 		fail = 1;
 	}
 	return fail;
