@@ -56,7 +56,7 @@ struct strbuf {
  * buf is non NULL and ->buf is NUL terminated even for a freshly
  * initialized strbuf.
  */
-char strbuf_slopbuf[1];
+static char strbuf_slopbuf[1];
 
 static __attribute__((__noreturn__)) void die(const char *err, ...)
 {
@@ -69,32 +69,15 @@ static __attribute__((__noreturn__)) void die(const char *err, ...)
 	exit(1);
 }
 
-static void memory_limit_check(size_t size)
-{
-	static int limit = -1;
-	if (limit == -1) {
-		const char *env = getenv("GIT_ALLOC_LIMIT");
-		limit = env ? atoi(env) * 1024 : 0;
-	}
-	if (limit && size > limit)
-		die("attempting to allocate %llu over limit %d",
-		    (intmax_t)size, limit);
-}
-
-static void do_nothing(size_t size) { }
-
-static void (*try_to_free_routine)(size_t size) = do_nothing;
 
 static void *xrealloc(void *ptr, size_t size)
 {
 	void *ret;
 
-	memory_limit_check(size);
 	ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
-		try_to_free_routine(size);
 		ret = realloc(ptr, size);
 		if (!ret && !size)
 			ret = realloc(ptr, 1);
